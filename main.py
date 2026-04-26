@@ -15,11 +15,11 @@ class MyPlugin(Star):
     # 注册指令的装饰器。指令名为 helloworld。注册成功后，发送 `/helloworld` 就会触发这个指令，并回复 `你好, {user_name}!`
     @filter.command("屎")
     async def record_shit(self, event: AstrMessageEvent):
-        msg_obj = event.message_obj
-
+        msg = event.message_obj.message
+        print(msg)
         # 1. 查找 Reply 组件
         reply_comp = None
-        for comp in msg_obj.message:
+        for comp in msg:
             if isinstance(comp, Reply):
                 reply_comp = comp
                 break
