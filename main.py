@@ -30,19 +30,16 @@ class ShitTaxPlugin(Star):
         pass
 
     def get_reply_message_obj(self, event: AstrMessageEvent):
-        """
-        从当前事件的消息链中提取被引用的消息对象 (AstrBotMessage)
-        根据最新文档，消息链是 List[BaseMessageComponent] 类型
-        """
-        message_obj = event.message_obj
-        if not message_obj:
+        msg_obj = event.message_obj
+        if not msg_obj:
             return None
-        # 遍历消息链，查找 Reply 类型的组件
-        for comp in message_obj.message:
+        for comp in msg_obj.message:
+            # 根据调试输出，确认类名。暂时保留 Reply
             if isinstance(comp, Reply):
-                # Reply 组件中应包含被引用消息的原始消息对象
-                # 具体属性名取决于 AstrBot 版本，可能是 comp.message 或 comp.reply
-                return getattr(comp, 'message', None) or getattr(comp, 'reply', None)
+                # 尝试多种已知属性名
+                return (getattr(comp, 'message', None) or
+                        getattr(comp, 'reply', None) or
+                        getattr(comp, 'reply_message', None))
         return None
 
     def extract_image(self, message_chain):
