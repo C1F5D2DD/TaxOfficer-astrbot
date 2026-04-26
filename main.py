@@ -1,7 +1,7 @@
 from astrbot.api.star import Context, Star, register
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.message_components import Reply
-
+from astrbot.api.message_components import *
+from astrbot.api import logger
 @register("TexOfficer", "c1f5d2dd", "记录群友搬的屎和交的税", "1.0")
 class MyPlugin(Star):
     def __init__(self, context: Context):
@@ -16,7 +16,7 @@ class MyPlugin(Star):
     @filter.command("屎")
     async def record_shit(self, event: AstrMessageEvent):
         msg = event.message_obj.message
-        print(msg)
+        logger.info(msg)
         # 1. 查找 Reply 组件
         reply_comp = None
         for comp in msg:
