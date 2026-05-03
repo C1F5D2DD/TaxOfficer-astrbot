@@ -16,7 +16,7 @@ class MyPlugin(Star):
     @filter.command("屎")
     async def record_shit(self, event: AstrMessageEvent):
         msg = event.message_obj.message
-        logger.info(msg)
+        logger.info(event)
         # 1. 查找 Reply 组件
         reply_comp = None
         for comp in msg:
