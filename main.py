@@ -2,7 +2,7 @@ from astrbot.api.star import Context, Star, register
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.message_components import *
 from astrbot.api import logger
-@register("TexOfficer", "c1f5d2dd", "记录群友搬的屎和交的税", "1.0")
+@register("TaxOfficer", "c1f5d2dd", "记录群友搬的屎和交的税", "1.0")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
