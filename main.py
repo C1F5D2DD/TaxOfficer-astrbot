@@ -229,7 +229,7 @@ class TaxOfficer(Star):
                     f"📌 嫌疑人：{reporter_name}\n"
                     f"💩 罪证：{ quoted_text or '(无文本)'}\n"
                     f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
-                    f"💰 {quoted_name} 当前欠税：{debt_num + 1} 条"
+                    f"💰 {reporter_name} 当前欠税：{debt_num + 1} 条"
                 )
 
         if has_images:
