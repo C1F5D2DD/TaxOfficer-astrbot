@@ -52,6 +52,11 @@ class TaxOfficer(Star):
         if not reply_comp:
             return
 
+        # 不能举报机器人自己
+        bot_id = event.get_self_id()
+        if bot_id and str(reply_comp.sender_id) == str(bot_id):
+            return
+
         # 获取当前 LLM 提供商 ID
         provider_id = await self.context.get_current_chat_provider_id(
             umo=event.unified_msg_origin
