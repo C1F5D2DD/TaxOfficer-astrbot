@@ -95,6 +95,7 @@ class TaxOfficer(Star):
                 chat_provider_id=provider_id,
                 prompt=prompt,
             )
+            logger.info(f"llm_judge_IS_shit result:{llm_resp.completion_text.strip().lower()}")
             return llm_resp.completion_text.strip().lower()== "yes"
         except Exception as e:
             logger.error(f"TaxOfficer LLM 出错: {e}")
@@ -118,6 +119,7 @@ class TaxOfficer(Star):
                 chat_provider_id=provider_id,
                 prompt=prompt,
             )
+            logger.info(f"llm_judge_IS_report result:{llm_resp.completion_text.strip().lower()}")
             return llm_resp.completion_text.strip().lower()
         except Exception as e:
             logger.error(f"TaxOfficer LLM 出错: {e}")
