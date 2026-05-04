@@ -179,7 +179,7 @@ class TaxOfficer(Star):
         plain_text = "".join(c.text for c in msg if isinstance(c, Plain))
         has_text = bool(plain_text.strip())
 
-        # ── LLM 分类 ──
+        logger.info("# ── LLM 分类 ──");
 
 
         result = await self.llm_judge_IS_Rreport(provider_id,user_text)
