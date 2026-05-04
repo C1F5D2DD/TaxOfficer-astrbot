@@ -8,6 +8,9 @@ import os
 import uuid
 import time
 import traceback
+# 去重缓存：记录最近处理过的消息ID列表
+_PROCESSED_IDS = []
+_MAX_CACHE = 50
 
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tax_data.json")
 
@@ -40,6 +43,16 @@ class TaxOfficer(Star):
     # 监听所有消息，用 LLM 判断意图
     # ──────────────────────────────
 
+    # ── 去重 ──
+    def _is_duplicate(self, msg_id: str) -> bool:
+        global _PROCESSED_IDS
+        if msg_id in _PROCESSED_IDS:
+            return True
+        _PROCESSED_IDS.append(msg_id)
+        if len(_PROCESSED_IDS) > _MAX_CACHE:
+            _PROCESSED_IDS = _PROCESSED_IDS[-_MAX_CACHE:]
+        return False
+
     @filter.event_message_type(EventMessageType.ALL)
     async def on_message(self, event: AstrMessageEvent):
         # 只处理包含引用回复的消息
@@ -52,23 +65,20 @@ class TaxOfficer(Star):
         if not reply_comp:
             return
 
+        # 去重：防止 @bot 多次导致重复处理
+        dedup_key = f"{event.get_message_str()}|{event.get_sender_id()}|{event.get_group_id()}"
+        if self._is_duplicate(dedup_key):
+            return
+
         # 不能举报机器人自己
         bot_id = event.get_self_id()
         if bot_id and str(reply_comp.sender_id) == str(bot_id):
             return
 
-        # 获取当前 LLM 提供商 ID
-        provider_id = await self.context.get_current_chat_provider_id(
-            umo=event.unified_msg_origin
-        )
-
-        # 提取消息文本
+        # 提取消息文本和图片
         user_text = event.get_message_str()
-
-        # 提取引用消息信息
         quoted_text = reply_comp.message_str or ""
 
-        # 提取当前消息中的图片（交税时的税图）
         current_images = []
         for comp in msg:
             if isinstance(comp, Image):
@@ -76,10 +86,30 @@ class TaxOfficer(Star):
                 if url:
                     current_images.append(url)
 
+        # 获取当前 LLM 提供商 ID
+        provider_id = await self.context.get_current_chat_provider_id(
+            umo=event.unified_msg_origin
+        )
+
+        # ── 图片交税快捷路径 ──
+        # 如果用户发了图片但没写什么文字（或只有@），直接判定为交税
+        has_images = bool(current_images)
+        # 只检查 Plain 组件中的文字（排除 @ 等自动生成的文本）
+        plain_text = "".join(c.text for c in msg if isinstance(c, Plain))
+        has_text = bool(plain_text.strip())
+        if has_images and not has_text:
+            response = await self._handle_payment(
+                event, reply_comp, user_text, current_images
+            )
+            if response:
+                yield event.plain_result(response)
+            return
+
         # ── 调用 LLM 判断意图 ──
         prompt = f"""你是一个群聊消息分类器，只负责判断以下用户消息的意图。
 
 用户发送的消息（引用了一条之前的消息）：{user_text}
+{'用户还附带了图片' if has_images else ''}
 
 请判断这条消息是否属于以下两类之一，只返回 JSON：
 
