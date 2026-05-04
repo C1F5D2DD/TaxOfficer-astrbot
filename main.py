@@ -46,12 +46,14 @@ class TaxOfficer(Star):
         self.data=TaxDataManager(str(self.plugin_data_path))
         self.config=config
         self.resent_reports=[]
+        logger.info("INIT")
 
     @filter.command("我")
-    async def my_debt(self, event: AstrMessageEvent,config: AstrBotConfig):
+    async def my_debt(self, event: AstrMessageEvent):
+
         uid = event.get_sender_id()
         name = event.get_sender_name()
-
+        logger.info(f"查税{uid}:{name}")
         unpaid = self.data.get_unpaid_debts(uid)
         if len(unpaid)==0:
             yield event.plain_result(f"✅ {name}，你现在清清白白，没有欠税～")
@@ -68,6 +70,7 @@ class TaxOfficer(Star):
         Args:
             name(string): 群友昵称或名字
         """
+        logger.info(f"查税{name}")
         unpaid = self.data.find_debts_by_name(name)
         if len(unpaid) == 0:
             yield event.plain_result(f"✅ {name}现在清清白白，没有欠税～")
@@ -78,6 +81,7 @@ class TaxOfficer(Star):
     # ──────────────────────────────
 
     async def llm_judge_IS_Shit(self, provider_id: str, text) :
+        logger.info(f"llm_judge_IS_Shit:{text}")
         prompt = f"""你是一个群聊消息分类器。请判断以下消息是不是恶心，反动，令人不适的内容
 
         {text}
@@ -98,6 +102,7 @@ class TaxOfficer(Star):
         return None
 
     async def llm_judge_IS_Rreport(self, provider_id: str, text) :
+        logger.info(f"llm_judge_IS_report:{text}")
         prompt = f"""你是一个群聊消息分类器。请判断以下消息的意图。
         只返回一个词，不要其他内容。
 
@@ -121,6 +126,7 @@ class TaxOfficer(Star):
 
     @filter.event_message_type(EventMessageType.ALL)
     async def on_message(self, event: AstrMessageEvent):
+        logger.info(f"on_message")
         msg = event.get_messages()
         reply_comp = next((c for c in msg if isinstance(c, Reply)), None)
         if not reply_comp:
@@ -130,7 +136,8 @@ class TaxOfficer(Star):
         dedup_key = f"{event.get_message_str()}|{event.get_sender_id()}|{event.get_group_id()}"
         if dedup_key not in self.resent_reports:
             self.resent_reports.append(dedup_key)
-            self.resent_reports.pop(0)
+            if len(self.resent_reports)>=50:
+                self.resent_reports.pop(0)
         else:
             return
 
