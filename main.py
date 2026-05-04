@@ -182,7 +182,7 @@ class TaxOfficer(Star):
         plain_text = "".join(c.text for c in msg if isinstance(c, Plain))
         has_text = bool(plain_text.strip())
 
-        logger.info("# ── LLM 分类 ──");
+        logger.info("# ── LLM 分类 ──")
 
 
         result = await self.llm_judge_IS_Rreport(provider_id,user_text)
@@ -205,18 +205,33 @@ class TaxOfficer(Star):
         if len(self.data.get_unpaid_debts(reporter_id))>self.config.max_reporter_debts:
             yield event.plain_result(f"🚫 {reporter_name}，你欠税超过 {self.config.max_reporter_debts} 条，先交税再来举报！")
 
-        is_shit =await self.llm_judge_IS_Shit(provider_id,quoted_text)
-        if (not has_images and has_text and is_shit) or has_images:
-            debt_num=len(self.data.get_unpaid_debts(quoted_id))
-            if len<self.config.max_debts:
-                self.data.add_debt(quoted_id,quoted_name,quoted_text,current_images,reporter_id, reporter_name)
+        if not has_images and has_text:
+            is_shit =await self.llm_judge_IS_Shit(provider_id,quoted_text)
+            if is_shit :
+                debt_num=len(self.data.get_unpaid_debts(quoted_id))
+                if len<self.config.max_debts:
+                    self.data.add_debt(quoted_id,quoted_name,quoted_text,current_images,reporter_id, reporter_name)
+                    yield event.plain_result(
+                        f"🚨 举报已立案！\n"
+                        f"📌 嫌疑人：{quoted_name}\n"
+                        f"💩 罪证：{quoted_text or '(无文本)'}\n"
+                        f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
+                        f"🚔 举报人：{reporter_name}\n"
+                        f"💰 {quoted_name} 当前欠税：{debt_num+1} 条"
+                    )
+                else:
+                    yield event.plain_result(f"{quoted_name}已经欠税{debt_num}条了，可怜可怜他")
+        if has_images:
+            debt_num = len(self.data.get_unpaid_debts(quoted_id))
+            if len < self.config.max_debts:
+                self.data.add_debt(quoted_id, quoted_name, quoted_text, current_images, reporter_id, reporter_name)
                 yield event.plain_result(
                     f"🚨 举报已立案！\n"
                     f"📌 嫌疑人：{quoted_name}\n"
                     f"💩 罪证：{quoted_text or '(无文本)'}\n"
                     f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
                     f"🚔 举报人：{reporter_name}\n"
-                    f"💰 {quoted_name} 当前欠税：{debt_num+1} 条"
+                    f"💰 {quoted_name} 当前欠税：{debt_num + 1} 条"
                 )
             else:
                 yield event.plain_result(f"{quoted_name}已经欠税{debt_num}条了，可怜可怜他")
