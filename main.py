@@ -142,7 +142,7 @@ class TaxOfficer(Star):
             if len(self.resent_reports)>=50:
                 self.resent_reports.pop(0)
         else:
-            return
+            yield event.plain_result("已经举报过了")
 
         # 提取信息
         reporter_id = event.get_sender_id()
