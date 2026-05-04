@@ -165,7 +165,7 @@ class TaxOfficer(Star):
                     url = item.url or item.file or ""
                     if url:
                         quoted_images.append(url)
-
+        logger.info(quoted_images)
         logger.info("# 当前的消息中的图片")
         current_images = []
         for c in msg:
@@ -173,7 +173,7 @@ class TaxOfficer(Star):
                 url = c.url or c.file or ""
                 if url:
                     current_images.append(url)
-
+        logger.info(current_images)
         provider_id = await self.context.get_current_chat_provider_id(
             umo=event.unified_msg_origin
         )
@@ -200,7 +200,7 @@ class TaxOfficer(Star):
                 f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
                 f"💰 {quoted_name} 当前欠税：{debt_num} 条"
             )
-
+        logger.info("准备交税")
             # 欠税 >2 不能举报
         if len(self.data.get_unpaid_debts(reporter_id))>self.config.max_reporter_debts:
             yield event.plain_result(f"🚫 {reporter_name}，你欠税超过 {self.config.max_reporter_debts} 条，先交税再来举报！")
