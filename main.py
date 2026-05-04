@@ -157,7 +157,7 @@ class TaxOfficer(Star):
         if bot_id and quoted_id == str(bot_id):
             return
 
-        # 引用的消息中的图片
+        logger.info("# 引用的消息中的图片")
         quoted_images = []
         if reply_comp.chain:
             for item in reply_comp.chain:
@@ -166,7 +166,7 @@ class TaxOfficer(Star):
                     if url:
                         quoted_images.append(url)
 
-        # 当前消息中的图片
+        logger.info("# 当前的消息中的图片")
         current_images = []
         for c in msg:
             if isinstance(c, Image):
