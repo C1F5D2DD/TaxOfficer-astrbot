@@ -130,10 +130,11 @@ class TaxOfficer(Star):
     async def on_message(self, event: AstrMessageEvent):
         logger.info(f"on_message")
         msg = event.get_messages()
+
         reply_comp = next((c for c in msg if isinstance(c, Reply)), None)
         if not reply_comp:
             return
-
+        logger.info(f"reply_comp:{reply_comp}")
         # 去重
         dedup_key = f"{event.get_message_str()}|{event.get_sender_id()}|{event.get_group_id()}"
         if dedup_key not in self.resent_reports:
