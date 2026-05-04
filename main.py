@@ -91,7 +91,7 @@ class TaxOfficer(Star):
                 chat_provider_id=provider_id,
                 prompt=prompt,
             )
-            result_text = llm_resp.completion.strip()
+            result_text = llm_resp.completion_text.strip()
 
             # 尝试从 LLM 回复中提取 JSON
             if "```json" in result_text:
@@ -113,7 +113,7 @@ class TaxOfficer(Star):
 
         except json.JSONDecodeError:
             logger.warning(
-                f"TaxOfficer LLM 返回非 JSON: {llm_resp.completion[:200]}"
+                f"TaxOfficer LLM 返回非 JSON: {llm_resp.completion_text[:200]}"
             )
         except Exception as e:
             logger.error(f"TaxOfficer LLM 分类出错: {e}")
