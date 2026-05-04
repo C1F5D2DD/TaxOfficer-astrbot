@@ -135,14 +135,7 @@ class TaxOfficer(Star):
         if not reply_comp:
             return
         logger.info(f"reply_comp:{reply_comp}")
-        # 去重
-        dedup_key = f"{event.get_message_str()}|{event.get_sender_id()}|{event.get_group_id()}"
-        if dedup_key not in self.resent_reports:
-            self.resent_reports.append(dedup_key)
-            if len(self.resent_reports)>=50:
-                self.resent_reports.pop(0)
-        else:
-            yield event.plain_result("已经举报过了")
+
 
         # 提取信息
         reporter_id = event.get_sender_id()
@@ -200,7 +193,16 @@ class TaxOfficer(Star):
                 f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
                 f"💰 {quoted_name} 当前欠税：{debt_num} 条"
             )
+            return
         logger.info("准备交税")
+        # 去重
+        dedup_key = f"{event.get_message_str()}|{event.get_sender_id()}|{event.get_group_id()}"
+        if dedup_key not in self.resent_reports:
+            self.resent_reports.append(dedup_key)
+            if len(self.resent_reports) >= 50:
+                self.resent_reports.pop(0)
+        else:
+            yield event.plain_result("已经举报过了")
             # 欠税 >2 不能举报
         if len(self.data.get_unpaid_debts(reporter_id))>self.config.max_reporter_debts:
             yield event.plain_result(f"🚫 {reporter_name}，你欠税超过 {self.config.max_reporter_debts} 条，先交税再来举报！")
