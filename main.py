@@ -178,7 +178,7 @@ class TaxOfficer(Star):
             umo=event.unified_msg_origin
         )
 
-        has_images = bool(current_images)
+        has_images = len(quoted_images)>0
         plain_text = "".join(c.text for c in msg if isinstance(c, Plain))
         has_text = bool(plain_text.strip())
 
