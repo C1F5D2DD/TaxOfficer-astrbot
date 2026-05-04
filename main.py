@@ -210,7 +210,7 @@ class TaxOfficer(Star):
             if is_shit :
                 debt_num=len(self.data.get_unpaid_debts(quoted_id))
                 if debt_num<self.config.max_debts:
-                    self.data.add_debt(quoted_id,quoted_name,quoted_text,current_images,reporter_id, reporter_name)
+                    self.data.add_debt(quoted_id,quoted_name,quoted_text,quoted_images,reporter_id, reporter_name)
                     yield event.plain_result(
                         f"🚨 举报已立案！\n"
                         f"📌 嫌疑人：{quoted_name}\n"
@@ -221,10 +221,21 @@ class TaxOfficer(Star):
                     )
                 else:
                     yield event.plain_result(f"{quoted_name}已经欠税{debt_num}条了，可怜可怜他")
+            else:
+                debt_num = len(self.data.get_unpaid_debts(quoted_id))
+                self.data.add_debt(reporter_id, reporter_name, quoted_text, quoted_images, reporter_id, reporter_name)
+                yield event.plain_result(
+                    f"🚨 诬告！\n"
+                    f"📌 嫌疑人：{reporter_name}\n"
+                    f"💩 罪证：{ quoted_text or '(无文本)'}\n"
+                    f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
+                    f"💰 {quoted_name} 当前欠税：{debt_num + 1} 条"
+                )
+
         if has_images:
             debt_num = len(self.data.get_unpaid_debts(quoted_id))
             if debt_num < self.config.max_debts:
-                self.data.add_debt(quoted_id, quoted_name, quoted_text, current_images, reporter_id, reporter_name)
+                self.data.add_debt(quoted_id, quoted_name, quoted_text, quoted_images, reporter_id, reporter_name)
                 yield event.plain_result(
                     f"🚨 举报已立案！\n"
                     f"📌 嫌疑人：{quoted_name}\n"
