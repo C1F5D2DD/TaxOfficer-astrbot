@@ -223,7 +223,7 @@ class TaxOfficer(Star):
                     yield event.plain_result(f"{quoted_name}已经欠税{debt_num}条了，可怜可怜他")
         if has_images:
             debt_num = len(self.data.get_unpaid_debts(quoted_id))
-            if len < self.config.max_debts:
+            if debt_num < self.config.max_debts:
                 self.data.add_debt(quoted_id, quoted_name, quoted_text, current_images, reporter_id, reporter_name)
                 yield event.plain_result(
                     f"🚨 举报已立案！\n"
