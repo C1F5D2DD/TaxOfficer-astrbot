@@ -104,6 +104,10 @@ class TaxOfficer(Star):
 
     async def llm_judge_IS_Rreport(self, provider_id: str, text) :
         logger.info(f"llm_judge_IS_report:{text}")
+        if text=="交税":
+            return "pay"
+        if text=="屎":
+            return "report"
         prompt = f"""你是一个群聊消息分类器。请判断以下消息的意图。
         只返回一个词，不要其他内容。
 
@@ -133,6 +137,7 @@ class TaxOfficer(Star):
 
         reply_comp = next((c for c in msg if isinstance(c, Reply)), None)
         if not reply_comp:
+            logger.info("不是税务相关")
             return
         logger.info(f"reply_comp:{reply_comp}")
 
