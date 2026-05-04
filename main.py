@@ -39,7 +39,10 @@ class TaxOfficer(Star):
 
     def __init__(self, context: Context,config: AstrBotConfig):
         super().__init__(context)
-        self.plugin_data_path = Path(get_astrbot_data_path()) / "plugin_data" / self.name
+        if config.data_dir == "":
+            self.plugin_data_path = Path(get_astrbot_data_path()) / "plugin_data" / self.name
+        else:
+            self.plugin_data_path=config.data_dir
         self.data=TaxDataManager(str(self.plugin_data_path))
         self.config=config
         self.resent_reports=[]

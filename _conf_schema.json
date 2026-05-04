@@ -3,6 +3,11 @@
     "description": "最大欠税数量",
     "type": "int"
   },
+  "data_dir": {
+    "description": "自定义记录保存路径(建议留空）",
+    "type": "string",
+    "default": ""
+  },
   "max_reporter_debts": {
     "description": "可以举报的人的最大欠税数",
     "type": "int"
