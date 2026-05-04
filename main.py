@@ -52,11 +52,10 @@ class TaxOfficer(Star):
         if not reply_comp:
             return
 
-        # 获取当前 LLM 提供商
-        provider = self.context.get_using_provider(event.unified_msg_origin)
-        if not provider:
-            return
-        provider_id = provider.meta().id
+        # 获取当前 LLM 提供商 ID
+        provider_id = await self.context.get_current_chat_provider_id(
+            umo=event.unified_msg_origin
+        )
 
         # 提取消息文本
         user_text = event.get_message_str()
