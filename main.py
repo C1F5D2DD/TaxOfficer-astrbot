@@ -209,7 +209,7 @@ class TaxOfficer(Star):
             is_shit =await self.llm_judge_IS_Shit(provider_id,quoted_text)
             if is_shit :
                 debt_num=len(self.data.get_unpaid_debts(quoted_id))
-                if len<self.config.max_debts:
+                if debt_num<self.config.max_debts:
                     self.data.add_debt(quoted_id,quoted_name,quoted_text,current_images,reporter_id, reporter_name)
                     yield event.plain_result(
                         f"🚨 举报已立案！\n"
