@@ -31,7 +31,7 @@ class TaxOfficer(Star):
        - 否（恶意举报）→ 举报人自己欠税
     3. 欠税 >2 条的人不能举报别人
     4. 纯图片消息直接走交税快捷路径，跳过 LLM
-    5. 查询命令：/我、/查税 name
+    5. 查询命令：/我、/查税 uid、/所有欠税
     """
     # ──────────────────────────────
     # 我的欠税
@@ -64,17 +64,39 @@ class TaxOfficer(Star):
     # ──────────────────────────────
 
     @filter.command("查税")
-    async def check_debt(self, event: AstrMessageEvent, name: str):
+    async def check_debt(self, event: AstrMessageEvent, uid: str):
         """查询指定群友的欠税情况。
 
         Args:
-            name(string): 群友昵称或名字
+            uid(string): 群友的 UID
         """
-        logger.info(f"查税{name}")
-        unpaid = self.data.find_debts_by_name(name)
+        logger.info(f"查税 uid={uid}")
+        unpaid = self.data.get_unpaid_debts(uid)
         if len(unpaid) == 0:
-            yield event.plain_result(f"✅ {name}现在清清白白，没有欠税～")
-        yield event.plain_result(f"📊 {name}还有 {len(unpaid)} 条欠税未还：")
+            yield event.plain_result(f"✅ 用户({uid})现在清清白白，没有欠税～")
+            return
+        name = unpaid[0].get("shitter_name", f"用户{uid}")
+        yield event.plain_result(f"📊 {name}({uid})还有 {len(unpaid)} 条欠税未还：")
+
+    # ──────────────────────────────
+    # 全群欠税
+    # ──────────────────────────────
+
+    @filter.command("所有欠税")
+    async def all_debts(self, event: AstrMessageEvent):
+        """列出当前群聊所有人的欠税情况。"""
+        logger.info(f"所有欠税")
+        all_unpaid = self.data.list_all_unpaid_debts()
+        if not all_unpaid:
+            yield event.plain_result("✅ 所有人现在都清清白白，没有欠税～")
+            return
+
+        lines = ["📊 全群欠税清单：\n"]
+        for uid, info in all_unpaid.items():
+            lines.append(f"💰 {info['name']}({uid})：{info['count']} 条")
+        lines.append(f"\n🔢 共 {len(all_unpaid)} 人欠税")
+
+        yield event.plain_result("\n".join(lines))
 
     # ──────────────────────────────
     # 监听所有消息，用 LLM 判断意图
@@ -495,24 +517,35 @@ class TaxDataManager:
     #  跨用户查询
     # ═══════════════════════════════════════════════
 
-    def find_debts_by_name(self, name: str) -> list:
+    def list_all_unpaid_debts(self) -> dict:
         """
-        遍历所有用户目录，模糊匹配欠税人名字。
-        用于 /查税 name 命令。
+        遍历所有用户目录，收集所有有未还欠税的用户信息。
+        用于 /所有欠税 命令。
+
+        Returns:
+            dict: {user_id: {"name": str, "count": int, "debts": list}}
+                  按欠税条数从多到少排序
         """
-        results = []
+        result = {}
         if not os.path.exists(self.base_path):
-            return results
+            return result
         for uid in os.listdir(self.base_path):
             debt_path = os.path.join(self.base_path, uid, "debt_record.json")
-            if os.path.exists(debt_path):
-                with open(debt_path, "r", encoding="utf-8") as f:
-                    try:
-                        debts = json.load(f)
-                    except json.JSONDecodeError:
-                        continue
-                for d in debts:
-                    if d.get("shitter_name") == name or name in d.get("shitter_name", ""):
-                        results.append(d)
-        return results
+            if not os.path.exists(debt_path):
+                continue
+            with open(debt_path, "r", encoding="utf-8") as f:
+                try:
+                    debts = json.load(f)
+                except json.JSONDecodeError:
+                    continue
+            unpaid = [d for d in debts if not d["paid"]]
+            if unpaid:
+                result[uid] = {
+                    "name": unpaid[0].get("shitter_name", f"用户{uid}"),
+                    "count": len(unpaid),
+                    "debts": unpaid,
+                }
+        # 按欠税条数从高到低排序
+        sorted_result = dict(sorted(result.items(), key=lambda x: x[1]["count"], reverse=True))
+        return sorted_result
 
