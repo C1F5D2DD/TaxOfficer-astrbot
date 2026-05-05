@@ -153,7 +153,9 @@ class TaxOfficer(Star):
 
         # 不能举报机器人
         if bot_id and quoted_id == str(bot_id):
+            yield event.plain_result("不准举报bot酱！")
             return
+
 
         logger.info("# 引用的消息中的图片")
         quoted_images = []
@@ -208,10 +210,11 @@ class TaxOfficer(Star):
                 self.resent_reports.pop(0)
         else:
             yield event.plain_result("已经举报过了")
+            return
             # 欠税 >2 不能举报
         if len(self.data.get_unpaid_debts(reporter_id))>self.config.max_reporter_debts:
             yield event.plain_result(f"🚫 {reporter_name}，你欠税超过 {self.config.max_reporter_debts} 条，先交税再来举报！")
-
+            return
         if not has_images and has_text:
             is_shit =await self.llm_judge_IS_Shit(provider_id,quoted_text)
             if is_shit :
@@ -226,8 +229,10 @@ class TaxOfficer(Star):
                         f"🚔 举报人：{reporter_name}\n"
                         f"💰 {quoted_name} 当前欠税：{debt_num+1} 条"
                     )
+                    return
                 else:
                     yield event.plain_result(f"{quoted_name}已经欠税{debt_num}条了，可怜可怜他")
+                    return
             else:
                 debt_num = len(self.data.get_unpaid_debts(quoted_id))
                 self.data.add_debt(reporter_id, reporter_name, quoted_text, quoted_images, reporter_id, reporter_name)
@@ -238,6 +243,7 @@ class TaxOfficer(Star):
                     f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
                     f"💰 {reporter_name} 当前欠税：{debt_num + 1} 条"
                 )
+                return
 
         if has_images:
             debt_num = len(self.data.get_unpaid_debts(quoted_id))
@@ -251,8 +257,10 @@ class TaxOfficer(Star):
                     f"🚔 举报人：{reporter_name}\n"
                     f"💰 {quoted_name} 当前欠税：{debt_num + 1} 条"
                 )
+                return
             else:
                 yield event.plain_result(f"{quoted_name}已经欠税{debt_num}条了，可怜可怜他")
+                return
 
 
 
