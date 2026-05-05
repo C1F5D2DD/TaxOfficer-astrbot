@@ -157,15 +157,15 @@ class TaxOfficer(Star):
             return
 
 
-        logger.info("# 引用的消息中的图片")
-        quoted_images = []
+        logger.info("# 引用的消息中的图片/聊天记录")
+        quoted_other = []
         if reply_comp.chain:
             for item in reply_comp.chain:
-                if isinstance(item, Image):
+                if isinstance(item, Image) or isinstance(item, Forward):
                     url = item.url or item.file or ""
                     if url:
-                        quoted_images.append(url)
-        logger.info(quoted_images)
+                        quoted_other.append(url)
+        logger.info(quoted_other)
         logger.info("# 当前的消息中的图片")
         current_images = []
         for c in msg:
@@ -178,7 +178,7 @@ class TaxOfficer(Star):
             umo=event.unified_msg_origin
         )
 
-        has_images = len(quoted_images)>0
+        has_images = len(quoted_other) > 0
         plain_text = "".join(c.text for c in msg if isinstance(c, Plain))
         has_text = bool(plain_text.strip())
 
@@ -191,13 +191,13 @@ class TaxOfficer(Star):
 
         if result=="pay":
 
-            self.data.pay_debt(quoted_id,quoted_name,quoted_text,quoted_images)
+            self.data.pay_debt(quoted_id, quoted_name, quoted_text, quoted_other)
             debt_num = len(self.data.get_unpaid_debts(quoted_id))
             yield event.plain_result(
                 f"🚨 交税成功！\n"
                 f"📌 缴纳人：{quoted_name}\n"
                 f"💩 内容：{quoted_text or '(无文本)'}\n"
-                f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
+                f"{'🖼️ 含罪证图片\n' if quoted_other else ''}"
                 f"💰 {quoted_name} 当前欠税：{debt_num} 条"
             )
             return
@@ -220,12 +220,12 @@ class TaxOfficer(Star):
             if is_shit :
                 debt_num=len(self.data.get_unpaid_debts(quoted_id))
                 if debt_num<self.config.max_debts:
-                    self.data.add_debt(quoted_id,quoted_name,quoted_text,quoted_images,reporter_id, reporter_name)
+                    self.data.add_debt(quoted_id, quoted_name, quoted_text, quoted_other, reporter_id, reporter_name)
                     yield event.plain_result(
                         f"🚨 举报已立案！\n"
                         f"📌 嫌疑人：{quoted_name}\n"
                         f"💩 罪证：{quoted_text or '(无文本)'}\n"
-                        f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
+                        f"{'🖼️ 含罪证图片\n' if quoted_other else ''}"
                         f"🚔 举报人：{reporter_name}\n"
                         f"💰 {quoted_name} 当前欠税：{debt_num+1} 条"
                     )
@@ -235,12 +235,12 @@ class TaxOfficer(Star):
                     return
             else:
                 debt_num = len(self.data.get_unpaid_debts(quoted_id))
-                self.data.add_debt(reporter_id, reporter_name, quoted_text, quoted_images, reporter_id, reporter_name)
+                self.data.add_debt(reporter_id, reporter_name, quoted_text, quoted_other, reporter_id, reporter_name)
                 yield event.plain_result(
                     f"🚨 诬告！\n"
                     f"📌 嫌疑人：{reporter_name}\n"
                     f"💩 罪证：{ quoted_text or '(无文本)'}\n"
-                    f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
+                    f"{'🖼️ 含罪证图片\n' if quoted_other else ''}"
                     f"💰 {reporter_name} 当前欠税：{debt_num + 1} 条"
                 )
                 return
@@ -248,12 +248,12 @@ class TaxOfficer(Star):
         if has_images:
             debt_num = len(self.data.get_unpaid_debts(quoted_id))
             if debt_num < self.config.max_debts:
-                self.data.add_debt(quoted_id, quoted_name, quoted_text, quoted_images, reporter_id, reporter_name)
+                self.data.add_debt(quoted_id, quoted_name, quoted_text, quoted_other, reporter_id, reporter_name)
                 yield event.plain_result(
                     f"🚨 举报已立案！\n"
                     f"📌 嫌疑人：{quoted_name}\n"
                     f"💩 罪证：{quoted_text or '(无文本)'}\n"
-                    f"{'🖼️ 含罪证图片\n' if quoted_images else ''}"
+                    f"{'🖼️ 含罪证图片\n' if quoted_other else ''}"
                     f"🚔 举报人：{reporter_name}\n"
                     f"💰 {quoted_name} 当前欠税：{debt_num + 1} 条"
                 )
